@@ -1,0 +1,29 @@
+{
+  "name": "personbackend",
+  "version": "1.0.0",
+  "description": "fullstack mooc osa 3",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "watch": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wesenbergg/osa3-node-express.git"
+  },
+  "author": "boriss",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wesenbergg/osa3-node-express/issues"
+  },
+  "homepage": "https://github.com/wesenbergg/osa3-node-express#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.4",
+    "morgan": "^1.9.1"
+  }
+}
