@@ -77,11 +77,12 @@ app.delete('/api/persons/:id', (req, res) => {
 app.post('/api/persons', (req, res) => {
     const body = req.body
     
-    if(!body.name) return res.status(400).json({
+    if(!body.name || body.name === "") return res.status(400).json({
         error: 'no name'
     })
 
-    if(!body.number) return res.status(400).json({
+    console.log(req.body.number)
+    if(!body.number || body.number === "") return res.status(400).json({
         error: 'no number'
     })
 
