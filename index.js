@@ -1,8 +1,10 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const morgan = require('morgan')
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const Person = require('./models/person')
 
 app.use(express.static('build'))
 
@@ -53,7 +55,9 @@ app.get('/info', (req, res) => {
 
   //hakee kaikki
 app.get('/api/persons', (req, res) => {
-  res.json(persons)
+  Person.find({}).then(persons => {
+      res.json(persons.map(p => p.toJSON()))
+  })
 })
 
 //hakee ihmisen id perusteella
@@ -92,14 +96,14 @@ app.post('/api/persons', (req, res) => {
             error: 'name must be unique'
         })
 
-    const person = {
+    const person = new Person({
         name: body.name,
-        number: body.number || '123',
-        id: Math.floor(Math.random() * 999994) + 5
-    }
+        number: body.number
+    })
 
-    persons = persons.concat(person)
-    res.json(person)
+    person.save().then(savedPerson => {
+      res.json(savedPerson.toJSON())
+    })
 })
 
 const unknownEndpoint = (request, response) => {
