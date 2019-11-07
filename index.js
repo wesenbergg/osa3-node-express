@@ -18,31 +18,6 @@ morgan.token('type', (req, res) => {
 app.use(bodyParser.json())
 app.use(morgan(':method :url :response-time :type'))
 
-
-
-let persons = [
-    {
-      name: "Arto Hellas",
-      number: "040-123456",
-      id: 1
-    },
-    {
-      name: "Ada Lovelace",
-      number: "39-44-5323523",
-      id: 2
-    },
-    {
-      name: "Dan Abramov",
-      number: "12-43-234345",
-      id: 3
-    },
-    {
-      name: "Mary Poppendieck",
-      number: "39-23-6423122",
-      id: 4
-    }
-  ]
-
   //etusivu 'hello world'
 app.get('/', (req, res) => {
   res.send('<h1>Hello World!</h1>')
@@ -50,7 +25,9 @@ app.get('/', (req, res) => {
 
 //näyttää ihmisten määrän ja pyynnön ajan
 app.get('/info', (req, res) => {
-    res.send(`<p>Phone book has ${persons.length} people</p><p>${new Date()}</p>`)
+    Person.find({}).then(p => {
+      res.send(`<p>Phonebook has ${p.length} people</p><p>${new Date()}</p>`)
+    })    
   })
 
   //hakee kaikki
@@ -61,24 +38,27 @@ app.get('/api/persons', (req, res) => {
 })
 
 //hakee ihmisen id perusteella
-app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    //console.log(id)
+app.get('/api/persons/:id', (req, res, next) => {
+    const id = req.params.id
 
-    const person = persons.find(p => p.id === id)
-    person ? res.json(person): res.status(404).end()
+    Person.findById(id).then(p => {
+      p ? console.log('true'): console.log('false')
+      p ? res.json(p.toJSON()): res.status(204).end()
+    })
+    .catch(error => next(error))
   })
 
 //poistaa ihmisen id perusteella
-app.delete('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    persons = persons.filter(p => p.id !== id)
-
-    res.status(204).end()
+app.delete('/api/persons/:id', (req, res, next) => {
+  console.log(req.params)
+    Person.findByIdAndRemove(req.params.id).then(result => {
+      res.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
 //lisää uuden henkilön
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
     const body = req.body
     
     if(!body.name || body.name === "") return res.status(400).json({
@@ -90,12 +70,6 @@ app.post('/api/persons', (req, res) => {
         error: 'no number'
     })
 
-    //console.log(persons.filter(p => p.name === req.body.name).length)
-    if(persons.filter(p => p.name === req.body.name).length !== 0)
-        return res.status(400).json({
-            error: 'name must be unique'
-        })
-
     const person = new Person({
         name: body.name,
         number: body.number
@@ -104,6 +78,25 @@ app.post('/api/persons', (req, res) => {
     person.save().then(savedPerson => {
       res.json(savedPerson.toJSON())
     })
+    .catch(e => next(e))
+})
+
+//päivittää ihmisen
+app.put('/api/persons/:id', (req, res, next) => {
+  const body = req.body
+
+  const person = {
+    name: body.name,
+    number: body.number
+  }
+
+  console.log("put")
+
+  Person.findByIdAndUpdate(req.params.id, person, { new: true })
+    .then(updatedPerson => {
+      res.json(updatedPerson.toJSON())
+    })
+    .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response) => {
@@ -111,6 +104,24 @@ const unknownEndpoint = (request, response) => {
   }
   
   app.use(unknownEndpoint)
+
+// olemattomien osoitteiden käsittely
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError' && error.kind == 'ObjectId') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
+
+  next(error)
+}
+
+// virheellisten pyyntöjen käsittely
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
