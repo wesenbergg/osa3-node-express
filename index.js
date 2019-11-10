@@ -18,11 +18,6 @@ morgan.token('type', (req) => {
 app.use(bodyParser.json())
 app.use(morgan(':method :url :response-time :type'))
 
-//etusivu 'hello world'
-app.get('/', (req, res) => {
-  res.send('<h1>Hello World!</h1>')
-})
-
 //näyttää ihmisten määrän ja pyynnön ajan
 app.get('/info', (req, res) => {
   Person.find({}).then(p => {
